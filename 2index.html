@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notación Científica - Actividad Evaluativa</title>
+
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        margin: 0;
+        padding: 20px;
+    }
+
+    .contenedor{
+        max-width: 900px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    h1{
+        text-align: center;
+        color: #1e3c72;
+    }
+
+    .nombre{
+        margin: 20px 0;
+    }
+
+    input[type="text"]{
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .ejercicio{
+        background: #f5f7fa;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 10px;
+    }
+
+    button{
+        background: #1e3c72;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover{
+        background: #16325c;
+    }
+
+    #resultado{
+        margin-top: 25px;
+        font-size: 22px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .correcto{
+        color: green;
+    }
+
+    .incorrecto{
+        color: red;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <h1>Práctica de Notación Científica</h1>
+
+    <div class="nombre">
+        <label><strong>Nombre y apellido:</strong></label>
+        <input type="text" id="nombre" placeholder="Ingrese su nombre completo">
+    </div>
+
+    <p><strong>Instrucciones:</strong> Escribe cada número en notación científica usando el formato:</p>
+
+    <p style="text-align:center;">
+        <strong>3.45×10^6</strong>
+    </p>
+
+    <div id="ejercicios"></div>
+
+    <div style="text-align:center; margin-top:20px;">
+        <button onclick="finalizar()">Finalizar y Enviar</button>
+    </div>
+
+    <div id="resultado"></div>
+
+</div>
+
+<script>
+
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwt_cjbdtALIs_mDvWZkz87JNuKyWfwfFNvb6vesL0IlEHYGUOcZCCl176dCJY7uWCq/exec";
+
+let respuestas = [];
+let enviado = false;
+
+function generarEjercicios(){
+
+    const contenedor = document.getElementById("ejercicios");
+    contenedor.innerHTML = "";
+    respuestas = [];
+
+    for(let i=0; i<10; i++){
+
+        const exponente = Math.floor(Math.random() * 8) + 2;
+
+        const coeficiente = (Math.random() * 8 + 1).toFixed(2);
+
+        const numero = Number(coeficiente) * Math.pow(10, exponente);
+
+        respuestas.push(`${coeficiente}×10^${exponente}`);
+
+        contenedor.innerHTML += `
+            <div class="ejercicio">
+                <strong>${i+1}) Expresa en notación científica:</strong><br><br>
+
+                ${numero.toLocaleString('en-US')}
+
+                <br><br>
+
+                <input
+                    type="text"
+                    id="r${i}"
+                    placeholder="Ejemplo: 3.45×10^6"
+                >
+
+                <div id="estado${i}"></div>
+            </div>
+        `;
+    }
+}
+
+function normalizar(texto){
+    return texto
+        .replace(/\s+/g,'')
+        .replace(/\*/g,'×')
+        .replace(/x/gi,'×');
+}
+
+async function finalizar(){
+
+    if(enviado){
+        alert("La evaluación ya fue enviada.");
+        return;
+    }
+
+    const nombre = document.getElementById("nombre").value.trim();
+
+    if(nombre === ""){
+        alert("Debe ingresar su nombre y apellido.");
+        return;
+    }
+
+    let puntaje = 0;
+
+    for(let i=0; i<10; i++){
+
+        const respuestaAlumno =
+            normalizar(document.getElementById(`r${i}`).value);
+
+        const correcta =
+            normalizar(respuestas[i]);
+
+        const estado =
+            document.getElementById(`estado${i}`);
+
+        if(respuestaAlumno === correcta){
+
+            puntaje++;
+
+            estado.innerHTML =
+                `<span class="correcto">✓ Correcto</span>`;
+
+        }else{
+
+            estado.innerHTML =
+                `<span class="incorrecto">
+                    ✗ Incorrecto.
+                    Respuesta: ${respuestas[i]}
+                 </span>`;
+        }
+    }
+
+    document.getElementById("resultado").innerHTML =
+        `${nombre}: obtuvo ${puntaje}/10 puntos (${puntaje*10}%).`;
+
+    try{
+
+        await fetch(URL_SCRIPT,{
+            method: "POST",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                puntaje: `${puntaje}/10`
+            })
+        });
+
+        enviado = true;
+
+        alert("Resultado enviado correctamente.");
+
+    }catch(error){
+
+        alert("No se pudo registrar el resultado.");
+        console.error(error);
+    }
+}
+
+generarEjercicios();
+
+</script>
+
+</body>
+</html>
