@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notación Científica</title>
+<style>
+body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#1e3c72,#2a5298);margin:0;padding:20px}
+.contenedor{max-width:900px;margin:auto;background:#fff;padding:30px;border-radius:15px}
+h1{text-align:center;color:#1e3c72}
+.ejercicio{background:#f5f7fa;padding:15px;margin:15px 0;border-radius:10px}
+input[type=text]{width:100%;padding:10px;box-sizing:border-box}
+button{background:#1e3c72;color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer}
+.correcto{color:green}.incorrecto{color:red}
+</style>
+</head>
+<body>
+<div class="contenedor">
+<h1>Práctica de Notación Científica</h1>
+<label><strong>Nombre y apellido:</strong></label>
+<input type="text" id="nombre" placeholder="Ingrese su nombre completo"><br><br>
+
+<div id="ejercicios"></div>
+
+<div style="text-align:center">
+<button onclick="finalizar()">Finalizar y Enviar</button>
+</div>
+
+<div id="resultado"></div>
+</div>
+
+<script>
+const URL_SCRIPT="https://script.google.com/macros/s/AKfycbwt_cjbdtALIs_mDvWZkz87JNuKyWfwfFNvb6vesL0IlEHYGUOcZCCl176dCJY7uWCq/exec";
+let respuestas=[];
+let enviado=false;
+
+function generarEjercicios(){
+ const cont=document.getElementById("ejercicios");
+ cont.innerHTML="";
+ respuestas=[];
+
+ for(let i=0;i<10;i++){
+   const exp=Math.floor(Math.random()*8)+2;
+   const coef=(Math.random()*8+1).toFixed(2);
+   const num=Number(coef)*Math.pow(10,exp);
+
+   respuestas.push(`${coef}×10^${exp}`);
+
+   cont.innerHTML+=`
+   <div class="ejercicio">
+   <b>${i+1}) Expresa en notación científica:</b><br><br>
+   ${num.toLocaleString('en-US')}
+   <br><br>
+   <input type="text" id="r${i}" placeholder="Ej: 3.45×10^6">
+   <div id="estado${i}"></div>
+   </div>`;
+ }
+}
+
+function normalizar(t){
+ return t.replace(/\s+/g,'').replace(/\*/g,'×').replace(/x/gi,'×');
+}
+
+async function finalizar(){
+
+ if(enviado){alert("La evaluación ya fue enviada.");return;}
+
+ const nombre=document.getElementById("nombre").value.trim();
+
+ if(nombre===""){
+   alert("Debe ingresar su nombre y apellido.");
+   return;
+ }
+
+ let puntaje=0;
+
+ for(let i=0;i<10;i++){
+
+   const alumno=normalizar(document.getElementById(`r${i}`).value);
+   const correcta=normalizar(respuestas[i]);
+   const estado=document.getElementById(`estado${i}`);
+
+   if(alumno===correcta){
+      puntaje++;
+      estado.innerHTML='<span class="correcto">✓ Correcto</span>';
+   }else{
+      estado.innerHTML=`<span class="incorrecto">✗ Incorrecto. Respuesta: ${respuestas[i]}</span>`;
+   }
+ }
+
+ document.getElementById("resultado").innerHTML=
+ `${nombre}: obtuvo ${puntaje}/10 puntos (${puntaje*10}%).`;
+
+ try{
+
+   await fetch(URL_SCRIPT,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify({
+         nombre:nombre,
+         puntaje:`${puntaje}/10`
+      })
+   });
+
+   enviado=true;
+   alert("Resultado enviado correctamente.");
+
+ }catch(e){
+   alert("Error al enviar resultado.");
+   console.error(e);
+ }
+}
+
+generarEjercicios();
+</script>
+</body>
+</html>
